@@ -203,7 +203,7 @@ public class Main implements Callable<Void> {
      * written
      * @param trainingSets The map of categories to attributes
      */
-    private static void buildTrainingFiles(
+    public static void buildTrainingFiles(
             String featureDirName,
             Map<String, List<SortedMap<Integer, Double>>> trainingSets) {
         String[] cats = trainingSets.keySet().toArray(new String[0]);
@@ -225,7 +225,7 @@ public class Main implements Callable<Void> {
      * @param cat2 The second category
      * @param trainingSets The attribute data
      */
-    private static void buildTrainingFile(
+    public static void buildTrainingFile(
             File featureDir,
             String cat1,
             String cat2,
@@ -260,7 +260,7 @@ public class Main implements Callable<Void> {
      * @param featureDir The name of the feature directory
      * @param modelDir The name of the model directory
      */
-    private static void buildSVMs(String featureDir, String modelDir) {
+    public static void buildSVMs(String featureDir, String modelDir) {
         try {
             File featureDirFile = new File(featureDir);
             File modelDirFile = new File(modelDir);

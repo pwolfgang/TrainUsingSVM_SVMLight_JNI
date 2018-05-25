@@ -26,11 +26,11 @@ by the JVM</dd>
 <dl>--model</dl><dd>Write the model files to this directory. Default is SVM_Model_Dir</dd>
 <dl>--feature_dir</dl><dd>Write the training feature files to this directory
   Default is SVM_Training_Features<dd>
-<dl>--use_even</dl><dd>If true, use even numbered samples for training
+<dl>--use_even</dl><dd>If specified, use even numbered samples for training
   Default is false</dd>
-<dl>--use_odd</dl><dd>If true, use even numbered samples for training
+<dl>--use_odd</dl><dd>If if specified, use even numbered samples for training
   Default is false</dd>
-<dl>--compute_major</dl<dd>  If true, the major code is computed from the minor code
+<dl>--compute_major</dl><dd>If specified, the major code is computed from the minor code
   Default is false</dd>
 <dl>--remove_stopwords [TRUE|FALSE|language]</dl>
 <dd>If true, remove common “stop words” from the text using language specific 
