@@ -4,6 +4,12 @@ This program trains a State Vector Machine to perform text classification.  The
 input is from a database table that contains as a minimum a column containing
 the text, a colum containing the classification (an integer), and a column 
 containing a unique ID.
+This program is based upon the Perl Script run_svm.pl 
+<a href="http://www.purpuras.net/pac/run-svm-text.html"> http://www.purpuras.net/pac/run-svm-text.html</a>. 
+And implement the algorithm described in Purpura, S., Hillard D. 
+<a href="http://www.purpuras.net/dgo2006%20Purpura%20Hillard%20Classifying%20Congressional%20Legislation.pdf">
+“Automated Classification of Congressional Legislation.”</a> Proceedings of the Seventh 
+International Conference on Digital Government Research. San Diego, CA.
 
 This program takes the following parameters from the command line:
 
