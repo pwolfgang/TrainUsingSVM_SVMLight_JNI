@@ -271,7 +271,7 @@ public class Main implements Callable<Void> {
                     int posDot = featureFile.indexOf('.');
                     String cats = featureFile.substring(posDot);
                     ArrayList<String> command = new ArrayList<>();
-                    command.add("svm_learn");
+                    command.add("java -cp ..\\libsvm\\libsvm.jar svm_train");
                     command.add(featureDir + "/" + featureFile);
                     command.add(modelDir + "/svm" + cats);
                     File outputFile = new File(modelDir, "temp." + cats);
