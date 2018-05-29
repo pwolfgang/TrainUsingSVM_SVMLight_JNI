@@ -149,8 +149,8 @@ public class Main implements Callable<Void> {
                         words.forEach(word -> {
                             counter.updateCounts(word);
                             vocabulary.updateCounts(word);
-                            counts.add(counter);
                         });
+                        counts.add(counter);
             });
             vocabulary.computeProbabilities();
             if (outputVocab != null) {
