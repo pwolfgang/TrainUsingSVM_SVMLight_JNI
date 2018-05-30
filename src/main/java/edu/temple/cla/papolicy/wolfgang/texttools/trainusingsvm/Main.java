@@ -238,12 +238,12 @@ public class Main implements Callable<Void> {
                 List<SortedMap<Integer, Double>> trainingSet2
                         = trainingSets.get(cat2);
                 int maxSize = Math.max(trainingSet1.size(), trainingSet2.size());
-//             for (int i = 0; i < maxSize; i++) {
-                for (int i = 0; i < trainingSet1.size(); i++) {
+                for (int i = 0; i < maxSize; i++) {
+//                for (int i = 0; i < trainingSet1.size(); i++) {
                     Util.writeFeatureLine(out, +1, trainingSet1.get(i % trainingSet1.size()));
                 }
-//             for (int i = 0; i < maxSize; i++) {
-                for (int i = 0; i < trainingSet2.size(); i++) {
+                for (int i = 0; i < maxSize; i++) {
+//                for (int i = 0; i < trainingSet2.size(); i++) {
                     Util.writeFeatureLine(out, -1, trainingSet2.get(i % trainingSet2.size()));
                 }
             }
