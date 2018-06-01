@@ -265,7 +265,7 @@ public class Main implements Callable<Void> {
         param.C = 1;
         param.eps = 1e-3;
         param.p = 0.1;
-        param.shrinking = 1;
+        param.shrinking = 0;
         param.probability = 0;
         param.nr_weight = 0;
         param.weight_label = new int[0];
@@ -274,13 +274,15 @@ public class Main implements Callable<Void> {
         try {
             File modelDirFile = new File(modelDir);
             for (int i = 0; i < ref.size() - 1; i++) {
+                String cat1 = ref.get(i);
                 for (int j = i + 1; j < ref.size(); j++) {
-                    String cat1 = ref.get(i);
-                    String cat2 = ref.get(i);
+                    String cat2 = ref.get(j);
                     svm_problem problem = buildTrainingProblem(cat1, cat2, trainingSets);
+                    System.out.printf("i:%d j:%d%n", i, j);
+                    System.out.println("Creating model " + cat1 + "." + cat2);
                     svm_model model = svm_train(problem, param);
-                    File modelFile = new File(modelDir, "svm." + cat1 + "." + cat2);
-                    System.out.println(modelFile);
+                    File modelFile = new File(modelDirFile, "svm." + cat1 + "." + cat2);
+                    System.out.println("Writing model " + modelFile.getName());
                     svm.svm_save_model(modelFile.getName(), model);
                 }
             }
