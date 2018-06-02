@@ -273,17 +273,18 @@ public class Main implements Callable<Void> {
 
         try {
             File modelDirFile = new File(modelDir);
-            for (int i = 0; i < ref.size() - 1; i++) {
-                String cat1 = ref.get(i);
-                for (int j = i + 1; j < ref.size(); j++) {
-                    String cat2 = ref.get(j);
+            String[] cats = trainingSets.keySet().toArray(new String[0]);
+            for (int i = 0; i < cats.length - 1; i++) {
+                String cat1 = cats[i];
+                for (int j = i + 1; j < cats.length; j++) {
+                    String cat2 = cats[j];
                     svm_problem problem = buildTrainingProblem(cat1, cat2, trainingSets);
                     System.out.printf("i:%d j:%d%n", i, j);
                     System.out.println("Creating model " + cat1 + "." + cat2);
                     svm_model model = svm_train(problem, param);
                     File modelFile = new File(modelDirFile, "svm." + cat1 + "." + cat2);
                     System.out.println("Writing model " + modelFile.getName());
-                    svm.svm_save_model(modelFile.getName(), model);
+                    svm.svm_save_model(modelFile.getPath(), model);
                 }
             }
         } catch (Exception ex) {
