@@ -23,12 +23,6 @@
 -->        
     </repositories>
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/tw.edu.ntu.csie/libsvm -->
-        <dependency>
-            <groupId>tw.edu.ntu.csie</groupId>
-            <artifactId>libsvm</artifactId>
-            <version>3.17</version>
-        </dependency>
         <dependency>
             <groupId>edu.temple.cla.papolicy.wolfgang</groupId>
             <artifactId>StemmerFactory</artifactId>
