@@ -178,7 +178,7 @@ public class Main implements Callable<Void> {
             for (int i = 0; i < ref.size(); i++) {
                 String cat = ref.get(i);
                 SortedMap<Integer, Double> attributeSet = attributes.get(i);
-                svm_node[] svm_node = convereToSVMNode(attributeSet);
+                svm_node[] svm_node = Util.convereToSVMNode(attributeSet);
                 List<svm_node[]> trainingSet
                         = trainingSets.get(cat);
                 if (trainingSet == null) {
@@ -196,16 +196,6 @@ public class Main implements Callable<Void> {
         return null;
     }
 
-    public svm_node[] convereToSVMNode(SortedMap<Integer, Double> attributeSet) {
-        List<svm_node> svm_node_list = new ArrayList<>();
-        attributeSet.forEach((k, v) -> {
-            svm_node node = new svm_node();
-            node.index = k;
-            node.value = v;
-            svm_node_list.add(node);
-        });
-        return svm_node_list.toArray(new svm_node[svm_node_list.size()]);
-    }
 
     /**
      * Method to build training problem.
