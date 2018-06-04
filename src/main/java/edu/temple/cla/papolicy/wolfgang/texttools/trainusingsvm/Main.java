@@ -44,14 +44,14 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import libsvm.svm;
-import static libsvm.svm.svm_train;
-import libsvm.svm_model;
-import libsvm.svm_node;
-import libsvm.svm_parameter;
-import libsvm.svm_problem;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import tw.edu.ntu.csie.libsvm.svm;
+import static tw.edu.ntu.csie.libsvm.svm.svm_train;
+import tw.edu.ntu.csie.libsvm.svm_model;
+import tw.edu.ntu.csie.libsvm.svm_node;
+import tw.edu.ntu.csie.libsvm.svm_parameter;
+import tw.edu.ntu.csie.libsvm.svm_problem;
 
 /**
  * Create a State Vector Machine to classify text. This program is based upon
