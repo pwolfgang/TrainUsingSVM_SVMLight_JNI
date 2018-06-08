@@ -35,14 +35,9 @@ import edu.temple.cla.papolicy.wolfgang.texttools.util.Preprocessor;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.Util;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.Vocabulary;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.WordCounter;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,28 +46,37 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
+import tw.edu.ntu.csie.libsvm.svm;
+import static tw.edu.ntu.csie.libsvm.svm.svm_train;
+import tw.edu.ntu.csie.libsvm.svm_model;
+import tw.edu.ntu.csie.libsvm.svm_node;
+import tw.edu.ntu.csie.libsvm.svm_parameter;
+import tw.edu.ntu.csie.libsvm.svm_problem;
 
 /**
  * Create a State Vector Machine to classify text. This program is based upon
- * the Perl Script run_svm.pl <a href="http://www.purpuras.net/pac/run-svm-text.html">
- * http://www.purpuras.net/pac/run-svm-text.html</a>. 
- * And implement the algorithm described in Purpura, S., Hillard D. 
+ * the Perl Script run_svm.pl
+ * <a href="http://www.purpuras.net/pac/run-svm-text.html">
+ * http://www.purpuras.net/pac/run-svm-text.html</a>. And implement the
+ * algorithm described in Purpura, S., Hillard D.
  * <a href="http://www.purpuras.net/dgo2006%20Purpura%20Hillard%20Classifying%20Congressional%20Legislation.pdf">
- * “Automated Classification of Congressional Legislation.”</a> Proceedings of the Seventh 
- * International Conference on Digital Government Research. San Diego, CA.
+ * “Automated Classification of Congressional Legislation.”</a> Proceedings of
+ * the Seventh International Conference on Digital Government Research. San
+ * Diego, CA.
+ *
  * @author Paul Wolfgang
  */
 public class Main implements Callable<Void> {
-    
+
     @Option(names = "--datasource", required = true, description = "File containing the datasource properties")
     private String dataSourceFileName;
-    
+
     @Option(names = "--table_name", required = true, description = "The name of the table containing the data")
     private String tableName;
 
     @Option(names = "--id_column", required = true, description = "Column(s) containing the ID")
     private String idColumn;
-    
+
     @Option(names = "--text_column", required = true, description = "Column(s) containing the text")
     private String textColumn;
 
@@ -81,13 +85,13 @@ public class Main implements Callable<Void> {
 
     @Option(names = "--model", description = "Directory where model files are written")
     private String modelOutput = "SVM_Model_Dir";
-    
+
     @Option(names = "--feature_dir", description = "Directory where feature files are written")
     private String featureDir = "SVM_Training_Features";
-    
+
     @Option(names = "--use_even", description = "Use even numbered samples for training")
     private Boolean useEven = false;
-    
+
     @Option(names = "--use_odd", description = "Use odd numbered samples for training")
     private Boolean useOdd = false;
 
@@ -108,12 +112,13 @@ public class Main implements Callable<Void> {
      */
     public static void main(String[] args) {
         CommandLine.call(new Main(), System.err, args);
-        
-    }    
-    
+
+    }
+
     /**
      * Execute the main program. This method is called after the command line
      * parameters have been populated.
+     *
      * @return null.
      */
     @Override
@@ -126,19 +131,19 @@ public class Main implements Callable<Void> {
             List<WordCounter> counts = new ArrayList<>();
             List<SortedMap<Integer, Double>> attributes = new ArrayList<>();
             Vocabulary vocabulary = new Vocabulary();
-            Map<String, List<SortedMap<Integer, Double>>> trainingSets = new TreeMap<>();
+            Map<String, List<svm_node[]>> trainingSets = new TreeMap<>();
             String classPath = System.getProperty("java.class.path");
             System.out.println(classPath);
-            Util.readFromDatabase(dataSourceFileName, 
-                    tableName, 
-                    idColumn, 
-                    textColumn, 
-                    codeColumn, 
-                    computeMajor, 
-                    useEven, 
-                    useOdd, 
-                    ids, 
-                    lines, 
+            Util.readFromDatabase(dataSourceFileName,
+                    tableName,
+                    idColumn,
+                    textColumn,
+                    codeColumn,
+                    computeMajor,
+                    useEven,
+                    useOdd,
+                    ids,
+                    lines,
                     ref);
 
             Preprocessor preprocessor = new Preprocessor(doStemming, removeStopWords);
@@ -149,13 +154,14 @@ public class Main implements Callable<Void> {
                         words.forEach(word -> {
                             counter.updateCounts(word);
                             vocabulary.updateCounts(word);
-                            counts.add(counter);
                         });
-            });
+                        counts.add(counter);
+                    });
             vocabulary.computeProbabilities();
             if (outputVocab != null) {
                 vocabulary.writeVocabulary(outputVocab);
             }
+            double gamma = 1.0/vocabulary.numFeatures();
             File modelParent = new File(modelOutput);
             Util.delDir(modelParent);
             modelParent.mkdirs();
@@ -172,16 +178,16 @@ public class Main implements Callable<Void> {
             for (int i = 0; i < ref.size(); i++) {
                 String cat = ref.get(i);
                 SortedMap<Integer, Double> attributeSet = attributes.get(i);
-                List<SortedMap<Integer, Double>> trainingSet
+                svm_node[] svm_node = Util.convereToSVMNode(attributeSet);
+                List<svm_node[]> trainingSet
                         = trainingSets.get(cat);
                 if (trainingSet == null) {
                     trainingSet = new ArrayList<>();
                     trainingSets.put(cat, trainingSet);
                 }
-                trainingSet.add(attributeSet);
+                trainingSet.add(svm_node);
             }
-            buildTrainingFiles(featureDir, trainingSets);
-            buildSVMs(featureDir, modelOutput);
+            buildSVMs(ref, trainingSets, gamma, modelOutput);
             System.err.println("NORMAL COMPLETION");
             System.exit(0);
         } catch (Exception ex) {
@@ -190,103 +196,85 @@ public class Main implements Callable<Void> {
         return null;
     }
 
-    /**
-     * Method to build the training files. Each training file has the name
-     * train.&lt;cat1&gt;.&lt;cat2&gt; Where &lt;cat1&gt; is the first category,
-     * and &lt;cat2&gt; is the second. Each file contains the training sets for
-     * &lt;cat1&gt; followed by the training data for &lt;cat2&gt;. The
-     * &lt;cat1&gt; records begin with +1 and the &lt;cat2&gt; records begin
-     * with -1. Following the +1 or -1 are wordId, attribute value pairs,
-     * separated by colons.
-     *
-     * @param featureDirName The name of the directory where the files are
-     * written
-     * @param trainingSets The map of categories to attributes
-     */
-    public static void buildTrainingFiles(
-            String featureDirName,
-            Map<String, List<SortedMap<Integer, Double>>> trainingSets) {
-        String[] cats = trainingSets.keySet().toArray(new String[0]);
-        File featureDirFile = new File(featureDirName);
-        Util.delDir(featureDirFile);
-        featureDirFile.mkdirs();
-        for (int i = 0; i < cats.length; i++) {
-            for (int j = cats.length - 1; j > i; j--) {
-                buildTrainingFile(featureDirFile, cats[i], cats[j], trainingSets);
-            }
-        }
-    }
 
     /**
-     * Method to build training file.
+     * Method to build training problem.
      *
-     * @param featureDir The directory where the training file is written
      * @param cat1 The first category
      * @param cat2 The second category
      * @param trainingSets The attribute data
+     * @return A svm_problem
      */
-    public static void buildTrainingFile(
-            File featureDir,
+    public static svm_problem buildTrainingProblem(
             String cat1,
             String cat2,
-            Map<String, List<SortedMap<Integer, Double>>> trainingSets) {
-        try {
-            File trainingFile = new File(featureDir, "train." + cat1 + "." + cat2);
-            try (PrintWriter out = new PrintWriter(new FileWriter(trainingFile))) {
-                List<SortedMap<Integer, Double>> trainingSet1
-                        = trainingSets.get(cat1);
-                List<SortedMap<Integer, Double>> trainingSet2
-                        = trainingSets.get(cat2);
-                int maxSize = Math.max(trainingSet1.size(), trainingSet2.size());
-//             for (int i = 0; i < maxSize; i++) {
-                for (int i = 0; i < trainingSet1.size(); i++) {
-                    Util.writeFeatureLine(out, +1, trainingSet1.get(i % trainingSet1.size()));
-                }
-//             for (int i = 0; i < maxSize; i++) {
-                for (int i = 0; i < trainingSet2.size(); i++) {
-                    Util.writeFeatureLine(out, -1, trainingSet2.get(i % trainingSet2.size()));
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            System.exit(1);
+            Map<String, List<svm_node[]>> trainingSets) {
+        List<svm_node[]> trainingSet1 = trainingSets.get(cat1);
+        List<svm_node[]> trainingSet2 = trainingSets.get(cat2);
+        svm_problem problem = new svm_problem();
+        int maxSize = Math.max(trainingSet1.size(), trainingSet2.size());
+        problem.l = 2 * maxSize;
+        problem.y = new double[2 * maxSize];
+        problem.x = new svm_node[2 * maxSize][];
+        int j = 0;
+        for (int i = 0; i < maxSize; i++) {
+            problem.y[j] = 1.0;
+            problem.x[j] = trainingSet1.get(i % trainingSet1.size());
+            j++;
         }
+        for (int i = 0; i < maxSize; i++) {
+            problem.y[j] = -1.0;
+            problem.x[j] = trainingSet2.get(i % trainingSet2.size());
+            j++;
+        }
+        return problem;
     }
 
     /**
      * Method to build the svms. Each svm is built by calling svm_learn for each
-     * training file in the feature directory.
+     * pair of category values.
      *
-     * @param featureDir The name of the feature directory
+     * @param ref The list of category values.
+     * @param trainingSets The training sets
+     * @param gamma gamma value for kernel 
      * @param modelDir The name of the model directory
      */
-    public static void buildSVMs(String featureDir, String modelDir) {
+    public static void buildSVMs(List<String> ref,
+            Map<String, List<svm_node[]>> trainingSets,
+            double gamma,
+            String modelDir) {
+        // Set default svm parameter values.
+        svm_parameter param = new svm_parameter();
+        param.svm_type = svm_parameter.C_SVC;
+        param.kernel_type = svm_parameter.RBF;
+        param.degree = 3;
+        param.gamma = gamma;	// 1/num_features
+        param.coef0 = 0;
+        param.nu = 0.5;
+        param.cache_size = 100;
+        param.C = 1;
+        param.eps = 1e-3;
+        param.p = 0.1;
+        param.shrinking = 1;
+        param.probability = 0;
+        param.nr_weight = 0;
+        param.weight_label = new int[0];
+        param.weight = new double[0];
+
         try {
-            File featureDirFile = new File(featureDir);
             File modelDirFile = new File(modelDir);
-            String[] featureFiles = featureDirFile.list();
-            ProcessBuilder pb = new ProcessBuilder();
-            for (String featureFile : featureFiles) {
-                if (featureFile.startsWith("train.")) {
-                    int posDot = featureFile.indexOf('.');
-                    String cats = featureFile.substring(posDot);
-                    ArrayList<String> command = new ArrayList<>();
-                    command.add("svm_learn");
-                    command.add(featureDir + "/" + featureFile);
-                    command.add(modelDir + "/svm" + cats);
-                    File outputFile = new File(modelDir, "temp." + cats);
-                    System.out.println(command);
-                    pb.command(command);
-                    Process p = pb.start();
-                    InputStream processOut = p.getInputStream();
-                    BufferedReader rdr = new BufferedReader(new InputStreamReader(processOut));
-                    try (PrintWriter pwtr = new PrintWriter(new FileWriter(outputFile))) {
-                        String line;
-                        while ((line = rdr.readLine()) != null) {
-                            pwtr.println(line);
-                        }
-                    }
-                    p.waitFor();
+            String[] cats = trainingSets.keySet().toArray(new String[0]);
+            for (int i = 0; i < cats.length - 1; i++) {
+                String cat1 = cats[i];
+                for (int j = i + 1; j < cats.length; j++) {
+                    String cat2 = cats[j];
+                    svm_problem problem = buildTrainingProblem(cat1, cat2, trainingSets);
+                    System.out.printf("i:%d j:%d%n", i, j);
+                    System.out.println("Creating model " + cat1 + "." + cat2);
+                    svm_model model = svm_train(problem, param);
+                    File modelFile = new File(modelDirFile, "svm." + cat1 + "." + cat2);
+                    System.out.println("Writing model " + modelFile.getName());
+                    svm.svm_save_model(modelFile.getPath(), model);
                 }
             }
         } catch (Exception ex) {
