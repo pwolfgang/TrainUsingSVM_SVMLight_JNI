@@ -15,6 +15,10 @@
             <id>StemmerFactory</id>
             <url>https://github.com/pwolfgang/StemmerFactory/releases/tag/1.0.0</url>
         </repository>
+        <repository>
+            <id>libsvm_java</id>
+            <url>https://github.com/pwolfgang/libsvm_java/releases/tag/3.17.1</url>
+        </repository>
 <!--
         <repository>
             <id>TestToolsUtil</id>
@@ -56,22 +60,17 @@
             <artifactId>TextToolsUtil</artifactId>
             <version>1.1.0</version>
         </dependency>
+        
 -->
+        <dependency>
+            <groupId>tw.edu.ntu.csie</groupId>
+            <artifactId>libsvm_java</artifactId>
+            <version>3.17.1</version>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>TextToolsUtil</artifactId>
             <version>1.1.1-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>tw.edu.ntu.csie</groupId>
-                    <artifactId>libsvm_mod</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>tw.edu.ntu.csie</groupId>
-            <artifactId>libsvm_java</artifactId>
-            <version>3.17.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
