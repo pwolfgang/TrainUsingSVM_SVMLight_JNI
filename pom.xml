@@ -20,7 +20,7 @@
             <url>https://github.com/pwolfgang/libsvm_java/releases/tag/3.17.1</url>
         </repository>
         <repository>
-            <id>TestToolsUtil</id>
+            <id>TextToolsUtil</id>
             <url>https://github.com/pwolfgang/TextToolsUtil/releases/tag/1.1.1</url>
         </repository>        
     </repositories>
