@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import tw.edu.ntu.csie.libsvm.svm;
 import static tw.edu.ntu.csie.libsvm.svm.svm_train;
@@ -64,14 +65,36 @@ import tw.edu.ntu.csie.libsvm.svm_problem;
  *
  * @author Paul Wolfgang
  */
-public class Main  {
+public class Main  implements Callable<Void> {
 
+    @CommandLine.Option(names = "--output_vocab", description = "File where vocabulary is written")
+    private String outputVocab;
+    
+    @CommandLine.Option(names = "--model", description = "Directory where model files are written")
+    private String modelOutput = "SVM_Model_Dir";
+
+    private String[] args;
+    
+    public Main(String [] args) {
+        this.args = args;
+    }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        Main main = new Main(args);
+        CommandLine commandLine = new CommandLine(main);
+        commandLine.setUnmatchedArgumentsAllowed(true).parse(args);
+        try {
+            main.call();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
+    @Override
+    public Void call() throws Exception {
         try {
             List<String> ids = new ArrayList<>();
             List<String> ref = new ArrayList<>();
@@ -83,14 +106,15 @@ public class Main  {
             Map<String, List<svm_node[]>> trainingSets = new TreeMap<>();
             CommonFrontEnd commonFrontEnd = new CommonFrontEnd();
             CommandLine commandLine = new CommandLine(commonFrontEnd);
+            commandLine.setUnmatchedArgumentsAllowed(true);
             commandLine.parse(args);
             commonFrontEnd.loadData(ids, ref, vocabulary, counts);
             vocabulary.computeProbabilities();
-            if (commonFrontEnd.getOutputVocab() != null) {
-                vocabulary.writeVocabulary(commonFrontEnd.getOutputVocab());
+            if (outputVocab != null) {
+                vocabulary.writeVocabulary(outputVocab);
             }
             double gamma = 1.0 / vocabulary.numFeatures();
-            File modelParent = new File(commonFrontEnd.getModelOutput());
+            File modelParent = new File(modelOutput);
             Util.delDir(modelParent);
             modelParent.mkdirs();
             File vocabFile = new File(modelParent, "vocab.bin");
@@ -115,12 +139,13 @@ public class Main  {
                 }
                 trainingSet.add(svm_node);
             }
-            buildSVMs(ref, trainingSets, gamma, commonFrontEnd.getModelOutput());
+            buildSVMs(ref, trainingSets, gamma, modelOutput);
             System.err.println("NORMAL COMPLETION");
             System.exit(0);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        return null;
     }
 
     /**
