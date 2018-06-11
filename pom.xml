@@ -19,10 +19,12 @@
             <id>libsvm_java</id>
             <url>https://github.com/pwolfgang/libsvm_java/releases/tag/3.17.1</url>
         </repository>
-        <repository>
+<!--
+                <repository>
             <id>TextToolsUtil</id>
             <url>https://github.com/pwolfgang/TextToolsUtil/releases/tag/1.1.1</url>
-        </repository>        
+        </repository>
+-->        
     </repositories>
     <dependencies>
         <dependency>
@@ -53,14 +55,14 @@
             <version>3.0.2</version>
         </dependency>
         <dependency>
-            <groupId>edu.temple.cla.papolicy.wolfgang.texttools</groupId>
-            <artifactId>TextToolsUtil</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <dependency>
             <groupId>tw.edu.ntu.csie</groupId>
             <artifactId>libsvm_java</artifactId>
             <version>3.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>TextToolsUtil</artifactId>
+            <version>1.2.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>

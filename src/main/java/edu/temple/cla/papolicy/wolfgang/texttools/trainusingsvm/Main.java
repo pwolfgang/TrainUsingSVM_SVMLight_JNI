@@ -31,7 +31,7 @@
  */
 package edu.temple.cla.papolicy.wolfgang.texttools.trainusingsvm;
 
-import edu.temple.cla.papolicy.wolfgang.texttools.util.Preprocessor;
+import edu.temple.cla.papolicy.wolfgang.texttools.util.CommonFrontEnd;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.Util;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.Vocabulary;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.WordCounter;
@@ -43,9 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import picocli.CommandLine;
-import picocli.CommandLine.Option;
 import tw.edu.ntu.csie.libsvm.svm;
 import static tw.edu.ntu.csie.libsvm.svm.svm_train;
 import tw.edu.ntu.csie.libsvm.svm_model;
@@ -66,63 +64,14 @@ import tw.edu.ntu.csie.libsvm.svm_problem;
  *
  * @author Paul Wolfgang
  */
-public class Main implements Callable<Void> {
+public class Main  {
 
-    @Option(names = "--datasource", required = true, description = "File containing the datasource properties")
-    private String dataSourceFileName;
-
-    @Option(names = "--table_name", required = true, description = "The name of the table containing the data")
-    private String tableName;
-
-    @Option(names = "--id_column", required = true, description = "Column(s) containing the ID")
-    private String idColumn;
-
-    @Option(names = "--text_column", required = true, description = "Column(s) containing the text")
-    private String textColumn;
-
-    @Option(names = "--code_column", required = true, description = "Column(s) containing the code")
-    private String codeColumn;
-
-    @Option(names = "--model", description = "Directory where model files are written")
-    private String modelOutput = "SVM_Model_Dir";
-
-    @Option(names = "--feature_dir", description = "Directory where feature files are written")
-    private String featureDir = "SVM_Training_Features";
-
-    @Option(names = "--use_even", description = "Use even numbered samples for training")
-    private Boolean useEven = false;
-
-    @Option(names = "--use_odd", description = "Use odd numbered samples for training")
-    private Boolean useOdd = false;
-
-    @Option(names = "--compute_major", description = "Major code is computed from minor code")
-    private Boolean computeMajor = false;
-
-    @Option(names = "--remove_stopwords", description = "Remove common \"stop words\" from the text.")
-    private String removeStopWords;
-
-    @Option(names = "--do_stemming", description = "Pass all words through stemming algorithm")
-    private String doStemming;
-
-    @Option(names = "--output_vocab", description = "File where vocabulary is written")
-    private String outputVocab;
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        CommandLine.call(new Main(), System.err, args);
 
-    }
-
-    /**
-     * Execute the main program. This method is called after the command line
-     * parameters have been populated.
-     *
-     * @return null.
-     */
-    @Override
-    public Void call() {
         try {
             List<String> ids = new ArrayList<>();
             List<String> ref = new ArrayList<>();
@@ -132,37 +81,16 @@ public class Main implements Callable<Void> {
             List<SortedMap<Integer, Double>> attributes = new ArrayList<>();
             Vocabulary vocabulary = new Vocabulary();
             Map<String, List<svm_node[]>> trainingSets = new TreeMap<>();
-            String classPath = System.getProperty("java.class.path");
-            System.out.println(classPath);
-            Util.readFromDatabase(dataSourceFileName,
-                    tableName,
-                    idColumn,
-                    textColumn,
-                    codeColumn,
-                    computeMajor,
-                    useEven,
-                    useOdd,
-                    ids,
-                    lines,
-                    ref);
-
-            Preprocessor preprocessor = new Preprocessor(doStemming, removeStopWords);
-            lines.stream()
-                    .map(line -> preprocessor.preprocess(line))
-                    .forEach(words -> {
-                        WordCounter counter = new WordCounter();
-                        words.forEach(word -> {
-                            counter.updateCounts(word);
-                            vocabulary.updateCounts(word);
-                        });
-                        counts.add(counter);
-                    });
+            CommonFrontEnd commonFrontEnd = new CommonFrontEnd();
+            CommandLine commandLine = new CommandLine(commonFrontEnd);
+            commandLine.parse(args);
+            commonFrontEnd.loadData(ids, ref, vocabulary, counts);
             vocabulary.computeProbabilities();
-            if (outputVocab != null) {
-                vocabulary.writeVocabulary(outputVocab);
+            if (commonFrontEnd.getOutputVocab() != null) {
+                vocabulary.writeVocabulary(commonFrontEnd.getOutputVocab());
             }
-            double gamma = 1.0/vocabulary.numFeatures();
-            File modelParent = new File(modelOutput);
+            double gamma = 1.0 / vocabulary.numFeatures();
+            File modelParent = new File(commonFrontEnd.getModelOutput());
             Util.delDir(modelParent);
             modelParent.mkdirs();
             File vocabFile = new File(modelParent, "vocab.bin");
@@ -187,15 +115,13 @@ public class Main implements Callable<Void> {
                 }
                 trainingSet.add(svm_node);
             }
-            buildSVMs(ref, trainingSets, gamma, modelOutput);
+            buildSVMs(ref, trainingSets, gamma, commonFrontEnd.getModelOutput());
             System.err.println("NORMAL COMPLETION");
             System.exit(0);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return null;
     }
-
 
     /**
      * Method to build training problem.
@@ -236,7 +162,7 @@ public class Main implements Callable<Void> {
      *
      * @param ref The list of category values.
      * @param trainingSets The training sets
-     * @param gamma gamma value for kernel 
+     * @param gamma gamma value for kernel
      * @param modelDir The name of the model directory
      */
     public static void buildSVMs(List<String> ref,
