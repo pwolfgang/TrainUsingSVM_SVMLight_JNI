@@ -73,7 +73,7 @@ public class Main  implements Callable<Void> {
     @CommandLine.Option(names = "--model", description = "Directory where model files are written")
     private String modelOutput = "SVM_Model_Dir";
 
-    private String[] args;
+    private final String[] args;
     
     public Main(String [] args) {
         this.args = args;

@@ -13,7 +13,7 @@
     <repositories>
         <repository>
             <id>StemmerFactory</id>
-            <url>https://github.com/pwolfgang/StemmerFactory/releases/tag/1.0.0</url>
+            <url>https://github.com/pwolfgang/StemmerFactory/releases/tag/1.1.1</url>
         </repository>
         <repository>
             <id>libsvm_java</id>
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>edu.temple.cla.papolicy.wolfgang</groupId>
             <artifactId>StemmerFactory</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
