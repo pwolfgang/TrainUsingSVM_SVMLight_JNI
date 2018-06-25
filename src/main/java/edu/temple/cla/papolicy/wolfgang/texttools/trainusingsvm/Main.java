@@ -141,7 +141,6 @@ public class Main  implements Callable<Void> {
             }
             buildSVMs(ref, trainingSets, gamma, modelOutput);
             System.err.println("NORMAL COMPLETION");
-            System.exit(0);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

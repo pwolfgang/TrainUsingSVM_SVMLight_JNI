@@ -1,0 +1,5 @@
+jdbc.driver:	com.mysql.jdbc.Driver
+jdbc.url:	jdbc:mysql://localhost/testdb
+jdbc.username:	paul
+jdbc.password:	secret
+

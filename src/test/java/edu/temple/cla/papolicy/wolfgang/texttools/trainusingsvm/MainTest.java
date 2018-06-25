@@ -24,8 +24,7 @@ public class MainTest {
                         "--table_name", "TestTable",
                         "--id_column", "ID",
                         "--text_column", "Abstract",
-                        "--code_column", "Code",
-                        "--output_vocab", "VocabOut.bin"};
+                        "--code_column", "Code"};
         Main.main(args);
     }
     
