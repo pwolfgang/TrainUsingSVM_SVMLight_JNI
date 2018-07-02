@@ -96,20 +96,14 @@ public class Main  implements Callable<Void> {
     @Override
     public Void call() throws Exception {
         try {
-            List<String> ids = new ArrayList<>();
-            List<String> ref = new ArrayList<>();
-            List<String> lines = new ArrayList<>();
-            List<List<String>> text = new ArrayList<>();
-            List<WordCounter> counts = new ArrayList<>();
+            List<Map<String, Object>> cases = new ArrayList<>();
             List<SortedMap<Integer, Double>> attributes = new ArrayList<>();
-            Vocabulary vocabulary = new Vocabulary();
             Map<String, List<svm_node[]>> trainingSets = new TreeMap<>();
             CommonFrontEnd commonFrontEnd = new CommonFrontEnd();
             CommandLine commandLine = new CommandLine(commonFrontEnd);
             commandLine.setUnmatchedArgumentsAllowed(true);
             commandLine.parse(args);
-            commonFrontEnd.loadData(ids, ref, vocabulary, counts);
-            vocabulary.computeProbabilities();
+            Vocabulary vocabulary = commonFrontEnd.loadData(cases);
             if (outputVocab != null) {
                 vocabulary.writeVocabulary(outputVocab);
             }
@@ -124,12 +118,10 @@ public class Main  implements Callable<Void> {
                 ex.printStackTrace();
                 System.exit(1);
             }
-            counts.forEach((counter) -> {
-                attributes.add(Util.computeAttributes(counter, vocabulary, 0.0));
-            });
-            for (int i = 0; i < ref.size(); i++) {
-                String cat = ref.get(i);
-                SortedMap<Integer, Double> attributeSet = attributes.get(i);
+            cases.forEach(c -> {
+                SortedMap<Integer, Double> attributeSet = 
+                        Util.computeAttributes((WordCounter)c.get("counts"), vocabulary, gamma);
+                String cat = (String)c.get("theCode");
                 svm_node[] svm_node = Util.convereToSVMNode(attributeSet);
                 List<svm_node[]> trainingSet
                         = trainingSets.get(cat);
@@ -138,8 +130,8 @@ public class Main  implements Callable<Void> {
                     trainingSets.put(cat, trainingSet);
                 }
                 trainingSet.add(svm_node);
-            }
-            buildSVMs(ref, trainingSets, gamma, modelOutput);
+            });
+            buildSVMs(trainingSets, gamma, modelOutput);
             System.err.println("NORMAL COMPLETION");
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -184,13 +176,11 @@ public class Main  implements Callable<Void> {
      * Method to build the svms. Each svm is built by calling svm_learn for each
      * pair of category values.
      *
-     * @param ref The list of category values.
      * @param trainingSets The training sets
      * @param gamma gamma value for kernel
      * @param modelDir The name of the model directory
      */
-    public static void buildSVMs(List<String> ref,
-            Map<String, List<svm_node[]>> trainingSets,
+    public static void buildSVMs(Map<String, List<svm_node[]>> trainingSets,
             double gamma,
             String modelDir) {
         // Set default svm parameter values.
