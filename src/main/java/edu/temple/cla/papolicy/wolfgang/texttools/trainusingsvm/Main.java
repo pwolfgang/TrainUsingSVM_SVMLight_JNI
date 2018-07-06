@@ -97,7 +97,6 @@ public class Main  implements Callable<Void> {
     public Void call() throws Exception {
         try {
             List<Map<String, Object>> cases = new ArrayList<>();
-            List<SortedMap<Integer, Double>> attributes = new ArrayList<>();
             Map<String, List<svm_node[]>> trainingSets = new TreeMap<>();
             CommonFrontEnd commonFrontEnd = new CommonFrontEnd();
             CommandLine commandLine = new CommandLine(commonFrontEnd);
@@ -121,7 +120,7 @@ public class Main  implements Callable<Void> {
             cases.forEach(c -> {
                 SortedMap<Integer, Double> attributeSet = 
                         Util.computeAttributes((WordCounter)c.get("counts"), vocabulary, gamma);
-                String cat = (String)c.get("theCode");
+                String cat = c.get("theCode").toString();
                 svm_node[] svm_node = Util.convereToSVMNode(attributeSet);
                 List<svm_node[]> trainingSet
                         = trainingSets.get(cat);
