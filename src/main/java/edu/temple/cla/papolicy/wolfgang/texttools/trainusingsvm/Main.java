@@ -35,6 +35,7 @@ import edu.temple.cla.papolicy.wolfgang.texttools.util.CommonFrontEnd;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.Util;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.Vocabulary;
 import edu.temple.cla.papolicy.wolfgang.texttools.util.WordCounter;
+import edu.temple.cla.wolfgang.jnisvmlight.SVMLight;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
@@ -45,12 +46,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
-import tw.edu.ntu.csie.libsvm.svm;
-import static tw.edu.ntu.csie.libsvm.svm.svm_train;
-import tw.edu.ntu.csie.libsvm.svm_model;
-import tw.edu.ntu.csie.libsvm.svm_node;
-import tw.edu.ntu.csie.libsvm.svm_parameter;
-import tw.edu.ntu.csie.libsvm.svm_problem;
 
 /**
  * Create a State Vector Machine to classify text. This program is based upon
@@ -74,6 +69,7 @@ public class Main  implements Callable<Void> {
     private String modelOutput = "SVM_Model_Dir";
 
     private final String[] args;
+    private final static SVMLight svmLight = new SVMLight();
     
     public Main(String [] args) {
         this.args = args;
@@ -95,9 +91,10 @@ public class Main  implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
+        long start = System.nanoTime();
         try {
             List<Map<String, Object>> cases = new ArrayList<>();
-            Map<String, List<svm_node[]>> trainingSets = new TreeMap<>();
+            Map<String, List<SortedMap<Integer, Double>>> trainingSets = new TreeMap<>();
             CommonFrontEnd commonFrontEnd = new CommonFrontEnd();
             CommandLine commandLine = new CommandLine(commonFrontEnd);
             commandLine.setUnmatchedArgumentsAllowed(true);
@@ -121,23 +118,25 @@ public class Main  implements Callable<Void> {
                 SortedMap<Integer, Double> attributeSet = 
                         Util.computeAttributes((WordCounter)c.get("counts"), vocabulary, gamma);
                 String cat = c.get("theCode").toString();
-                svm_node[] svm_node = Util.convereToSVMNode(attributeSet);
-                List<svm_node[]> trainingSet
+                List<SortedMap<Integer, Double>> trainingSet
                         = trainingSets.get(cat);
                 if (trainingSet == null) {
                     trainingSet = new ArrayList<>();
                     trainingSets.put(cat, trainingSet);
                 }
-                trainingSet.add(svm_node);
+                trainingSet.add(attributeSet);
             });
-            buildSVMs(trainingSets, gamma, modelOutput);
+            buildSVMs(trainingSets, modelOutput, vocabulary.numFeatures());
             System.err.println("NORMAL COMPLETION");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        long end = System.nanoTime();
+        System.err.println("TOTAL TIME " + (end-start)/1.0e9 + "sec.");
+        System.err.println("SUCESSFUL COMPLETION");
         return null;
     }
-
+    
     /**
      * Method to build training problem.
      *
@@ -146,29 +145,22 @@ public class Main  implements Callable<Void> {
      * @param trainingSets The attribute data
      * @return A svm_problem
      */
-    public static svm_problem buildTrainingProblem(
+    public static List<SortedMap<Integer, Double>> buildTrainingProblem(
             String cat1,
             String cat2,
-            Map<String, List<svm_node[]>> trainingSets) {
-        List<svm_node[]> trainingSet1 = trainingSets.get(cat1);
-        List<svm_node[]> trainingSet2 = trainingSets.get(cat2);
-        svm_problem problem = new svm_problem();
+            Map<String, List<SortedMap<Integer, Double>>> trainingSets) {
+        List<SortedMap<Integer, Double>> trainingSet1 = trainingSets.get(cat1);
+        List<SortedMap<Integer, Double>> trainingSet2 = trainingSets.get(cat2);
         int maxSize = Math.max(trainingSet1.size(), trainingSet2.size());
-        problem.l = 2 * maxSize;
-        problem.y = new double[2 * maxSize];
-        problem.x = new svm_node[2 * maxSize][];
-        int j = 0;
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        List<SortedMap<Integer, Double>> docs = new ArrayList<>();
         for (int i = 0; i < maxSize; i++) {
-            problem.y[j] = 1.0;
-            problem.x[j] = trainingSet1.get(i % trainingSet1.size());
-            j++;
+            docs.add(trainingSet1.get(i % trainingSet1.size()));
         }
         for (int i = 0; i < maxSize; i++) {
-            problem.y[j] = -1.0;
-            problem.x[j] = trainingSet2.get(i % trainingSet2.size());
-            j++;
+            docs.add(trainingSet2.get(i % trainingSet2.size()));
         }
-        return problem;
+        return docs;
     }
 
     /**
@@ -176,30 +168,11 @@ public class Main  implements Callable<Void> {
      * pair of category values.
      *
      * @param trainingSets The training sets
-     * @param gamma gamma value for kernel
      * @param modelDir The name of the model directory
      */
-    public static void buildSVMs(Map<String, List<svm_node[]>> trainingSets,
-            double gamma,
-            String modelDir) {
+    public static void buildSVMs(Map<String, List<SortedMap<Integer, Double>>> trainingSets,
+           String modelDir, int totWords) {
         // Set default svm parameter values.
-        svm_parameter param = new svm_parameter();
-        param.svm_type = svm_parameter.C_SVC;
-        param.kernel_type = svm_parameter.RBF;
-        param.degree = 3;
-        param.gamma = gamma;	// 1/num_features
-        param.coef0 = 0;
-        param.nu = 0.5;
-        param.cache_size = 100;
-        param.C = 1;
-        param.eps = 1e-3;
-        param.p = 0.1;
-        param.shrinking = 1;
-        param.probability = 0;
-        param.nr_weight = 0;
-        param.weight_label = new int[0];
-        param.weight = new double[0];
-
         try {
             File modelDirFile = new File(modelDir);
             String[] cats = trainingSets.keySet().toArray(new String[0]);
@@ -207,13 +180,20 @@ public class Main  implements Callable<Void> {
                 String cat1 = cats[i];
                 for (int j = i + 1; j < cats.length; j++) {
                     String cat2 = cats[j];
-                    svm_problem problem = buildTrainingProblem(cat1, cat2, trainingSets);
+                    List<SortedMap<Integer, Double>> docs = buildTrainingProblem(cat1, cat2, trainingSets);
+                    double[] lables = new double[docs.size()];
+                    int halfSize = lables.length/2;
+                    for (int k = 0; k < halfSize; k++) {
+                        lables[k] = 1;
+                    }
+                    for (int k = halfSize; k < lables.length; k++) {
+                        lables[k] = -1;
+                    }
                     System.out.printf("i:%d j:%d%n", i, j);
                     System.out.println("Creating model " + cat1 + "." + cat2);
-                    svm_model model = svm_train(problem, param);
-                    File modelFile = new File(modelDirFile, "svm." + cat1 + "." + cat2);
-                    System.out.println("Writing model " + modelFile.getName());
-                    svm.svm_save_model(modelFile.getPath(), model);
+                    String modelFile = new File(modelDirFile, "svm." + cat1 + "." + cat2).getPath();
+                    System.out.println("Writing model " + modelFile);                   
+                    svmLight.SVMLearn(docs, lables, docs.size(), totWords, modelFile);
                 }
             }
         } catch (Exception ex) {
