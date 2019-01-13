@@ -42,7 +42,7 @@
         <dependency>
             <groupId>edu.temple.cla.papolicy.wolfgang.texttools</groupId>
             <artifactId>TextToolsUtil</artifactId>
-            <version>1.4.0-SNAPSHOT</version>
+            <version>1.4.0</version>
         </dependency>
         <dependency>
             <groupId>edu.temple.cla.wolfgang</groupId>
