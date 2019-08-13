@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.temple.cla.papolicy.wolfgang.texttools</groupId>
     <artifactId>TrainUsingSVM_SVMLight_JNI</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>edu.temple.cla.papolicy.wolfgang.texttools</groupId>
             <artifactId>TextToolsUtil</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.2</version>
         </dependency>
         <dependency>
             <groupId>edu.temple.cla.wolfgang</groupId>
@@ -78,6 +78,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <include>compile</include>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
